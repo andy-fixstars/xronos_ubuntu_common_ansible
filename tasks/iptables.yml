@@ -22,12 +22,14 @@
 
 - name: Use iptables-legacy
   become: true
+  when: module_usage_count.stdout == "0"
   community.general.alternatives:
     name: iptables
     path: /usr/sbin/iptables-legacy
 
 - name: Use ip6tables-legacy
   become: true
+  when: module_usage_count.stdout == "0"
   community.general.alternatives:
     name: ip6tables
     path: /usr/sbin/ip6tables-legacy
