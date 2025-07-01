@@ -1,0 +1,35 @@
+---
+- name: Check if module is loaded and in use
+  become: true
+  ansible.builtin.shell: lsmod | awk '{if ($1 == "nf_tables") print $3;}'
+  register: module_usage_count
+
+- name: Disable nftables service
+  become: true
+  when: module_usage_count.stdout == "0"
+  ansible.builtin.service:
+    name: nftables
+    state: stopped
+    enabled: false
+
+- name: Unload nf_tables kernel module if not used
+  become: true
+  when: module_usage_count.stdout == "0"
+  community.general.modprobe:
+    name: nf_tables
+    state: absent
+    persistent: absent
+
+- name: Use iptables-legacy
+  become: true
+  when: module_usage_count.stdout == "0"
+  community.general.alternatives:
+    name: iptables
+    path: /usr/sbin/iptables-legacy
+
+- name: Use ip6tables-legacy
+  become: true
+  when: module_usage_count.stdout == "0"
+  community.general.alternatives:
+    name: ip6tables
+    path: /usr/sbin/ip6tables-legacy
